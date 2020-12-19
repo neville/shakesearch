@@ -93,7 +93,14 @@ func (s *Searcher) Search(query string) []string {
 	for _, indexPosition := range indexPositions {
 		// Checks for the beginning of the sentence
 		stepsBackward := 0
-		for i := indexPosition - 1; ; i-- {
+		backwardsStartPosition := indexPosition - 1
+
+		// Handle case where text starts with the searched word
+		if backwardsStartPosition < 0 {
+			backwardsStartPosition = 0
+		}
+
+		for i := backwardsStartPosition; ; i-- {
 			if s.CompleteWorks[i] == '.' || s.CompleteWorks[i] == '\n' || s.CompleteWorks[i] == '\r' {
 				break
 			}
@@ -103,7 +110,9 @@ func (s *Searcher) Search(query string) []string {
 
 		// Checks for the end of the sentence
 		stepsForward := searchStringLength
-		for j := indexPosition + searchStringLength; ; j++ {
+		forwardStartPosition := indexPosition + searchStringLength
+
+		for j := forwardStartPosition; ; j++ {
 			if s.CompleteWorks[j] == '.' || s.CompleteWorks[j] == '\n' || s.CompleteWorks[j] == '\r' {
 				break
 			}
