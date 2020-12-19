@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -35,11 +36,6 @@ func main() {
 	}
 }
 
-type Searcher struct {
-	CompleteWorks string
-	SuffixArray   *suffixarray.Index
-}
-
 func handleSearch(searcher Searcher) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query, ok := r.URL.Query()["q"]
@@ -48,6 +44,7 @@ func handleSearch(searcher Searcher) func(w http.ResponseWriter, r *http.Request
 			w.Write([]byte("missing search query in URL params"))
 			return
 		}
+
 		results := searcher.Search(query[0])
 		buf := &bytes.Buffer{}
 		enc := json.NewEncoder(buf)
@@ -57,26 +54,50 @@ func handleSearch(searcher Searcher) func(w http.ResponseWriter, r *http.Request
 			w.Write([]byte("encoding failure"))
 			return
 		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(buf.Bytes())
 	}
 }
 
+// Searcher holds the file contents in memory on which the search needs to be performed
+type Searcher struct {
+	CompleteWorks string
+	SuffixArray   *suffixarray.Index
+}
+
+// Load loads the text file contents in memory
 func (s *Searcher) Load(filename string) error {
 	dat, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return fmt.Errorf("Load: %w", err)
 	}
-	s.CompleteWorks = string(dat)
-	s.SuffixArray = suffixarray.New(dat)
+
+	// Converting all the file contents to lowercase for handling case insensitive searches
+	fileWithContentInLowerCase := strings.ToLower(string(dat))
+	s.CompleteWorks = fileWithContentInLowerCase
+
+	s.SuffixArray = suffixarray.New([]byte(fileWithContentInLowerCase))
+
 	return nil
 }
 
+// Search searches and returns substrings that have the search term in them
 func (s *Searcher) Search(query string) []string {
-	idxs := s.SuffixArray.Lookup([]byte(query), -1)
+	idxs := s.SuffixArray.Lookup([]byte(strings.ToLower(query)), -1)
+
 	results := []string{}
 	for _, idx := range idxs {
 		results = append(results, s.CompleteWorks[idx-250:idx+250])
 	}
+
 	return results
 }
+
+/*
+From the users perspective
+
+1. Search should be case insensitive
+2. Search should also return words which are not exact matches
+3. Make the results more easier to read
+*/
