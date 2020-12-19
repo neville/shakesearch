@@ -27,3 +27,21 @@ current state, can be deployed easily on Heroku's free tier.
 
 ## Live version of the forked project
 https://neville-shakesearch.herokuapp.com/
+
+## Changes made
+- Improved search to handle
+    - Case insensitive searches
+    - Make the results easier to read by identifying the beginning and ending of sentences where the search string is present
+    - Include matches which are not exact, ex - beau in beautiful
+
+- Refactored the following
+    - Project structure to make it more in line with a web app
+        - Separate modules for handling search and api route handlers 
+
+- Project deployed to my personal heroku - https://neville-shakesearch.herokuapp.com/
+
+- How you would prioritize changes if you had more time.
+    1. Spend more time on making the search more efficient for larger data sets by implementing different search algorithms like Boyer-Moole etc..
+    2. Include case insensitive searches to improve the search experience 
+    3. Include matches which are not exact, ex - beau in beautiful
+    4. Make the results easier to read by identifying the beginning and ending of sentences where the search string is present
