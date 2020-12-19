@@ -84,20 +84,40 @@ func (s *Searcher) Load(filename string) error {
 
 // Search searches and returns substrings that have the search term in them
 func (s *Searcher) Search(query string) []string {
-	idxs := s.SuffixArray.Lookup([]byte(strings.ToLower(query)), -1)
+	searchStringLength := len(query)
+
+	// Builds word occurence index
+	indexPositions := s.SuffixArray.Lookup([]byte(strings.ToLower(query)), -1)
 
 	results := []string{}
-	for _, idx := range idxs {
-		results = append(results, s.CompleteWorks[idx-250:idx+250])
+	for _, indexPosition := range indexPositions {
+		// Checks for the beginning of the sentence
+		stepsBackward := 0
+		for i := indexPosition - 1; ; i-- {
+			if s.CompleteWorks[i] == '.' || s.CompleteWorks[i] == '\n' || s.CompleteWorks[i] == '\r' {
+				break
+			}
+
+			stepsBackward++
+		}
+
+		// Checks for the end of the sentence
+		stepsForward := searchStringLength
+		for j := indexPosition + searchStringLength; ; j++ {
+			if s.CompleteWorks[j] == '.' || s.CompleteWorks[j] == '\n' || s.CompleteWorks[j] == '\r' {
+				break
+			}
+
+			stepsForward++
+		}
+
+		// Adds sentence containing the searched word
+		if stepsForward == searchStringLength {
+			results = append(results, s.CompleteWorks[indexPosition-stepsBackward:indexPosition+searchStringLength])
+		} else {
+			results = append(results, s.CompleteWorks[indexPosition-stepsBackward:indexPosition+stepsForward])
+		}
 	}
 
 	return results
 }
-
-/*
-From the users perspective
-
-1. Search should be case insensitive
-2. Search should also return words which are not exact matches
-3. Make the results more easier to read
-*/
